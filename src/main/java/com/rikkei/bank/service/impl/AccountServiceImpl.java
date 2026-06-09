@@ -40,7 +40,7 @@ public class AccountServiceImpl implements AccountService {
         User user = getCurrentUser();
 
         // Kiểm tra xem đã KYC chưa (Theo SRS, phải KYC mới được mở tài khoản giao dịch)
-        if (!user.isKyc()) {
+        if (!user.getIsKyc()) {
             throw new BusinessException("Bạn cần hoàn tất định danh eKYC để mở tài khoản");
         }
 

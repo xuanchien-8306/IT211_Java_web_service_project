@@ -11,5 +11,5 @@ public class UserResponseDto {
     private Long id;
     private String username;
     private String roleName;
-    private boolean isKyc;
+    private Boolean isKyc;
 }

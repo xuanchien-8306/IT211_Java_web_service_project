@@ -3,6 +3,7 @@ package com.rikkei.bank.service.impl;
 import com.rikkei.bank.dto.KycApproveRequest;
 import com.rikkei.bank.dto.ApiResponse;
 import com.rikkei.bank.entity.KycProfile;
+import com.rikkei.bank.entity.KycStatus;
 import com.rikkei.bank.entity.User;
 import com.rikkei.bank.exception.UserNotFoundException;
 import com.rikkei.bank.repository.UserRepository;
@@ -26,13 +27,12 @@ public class AdminServiceImpl implements AdminService {
         KycProfile kycProfile = user.getKycProfile();
 
         // Cập nhật trạng thái trong bảng KYC
-        kycProfile.setStatus(request.getStatus());
-
+        kycProfile.setStatus(KycStatus.CONFIRM);
         // Cập nhật cờ isKyc trong bảng User
         if ("CONFIRM".equals(request.getStatus())) {
-            user.setKyc(true);
+            user.setIsKyc(true);
         } else {
-            user.setKyc(false);
+            user.setIsKyc(false);
         }
 
         userRepository.save(user);

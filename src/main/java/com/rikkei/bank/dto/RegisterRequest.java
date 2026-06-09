@@ -18,5 +18,4 @@ public class RegisterRequest {
     private String fullName;
 
     @NotBlank(message = "Số CCCD/CMND không được để trống")
-    private String idCardNumber;
-}
+    private String idNumber;}

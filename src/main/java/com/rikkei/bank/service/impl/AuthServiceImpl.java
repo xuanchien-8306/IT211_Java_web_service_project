@@ -5,11 +5,7 @@ import com.rikkei.bank.dto.RefreshTokenRequest;
 import com.rikkei.bank.dto.RegisterRequest;
 import com.rikkei.bank.dto.ApiResponse;
 import com.rikkei.bank.dto.TokenResponse;
-import com.rikkei.bank.entity.KycProfile;
-import com.rikkei.bank.entity.RefreshToken;
-import com.rikkei.bank.entity.Role;
-import com.rikkei.bank.entity.TokenBlacklist;
-import com.rikkei.bank.entity.User;
+import com.rikkei.bank.entity.*;
 import com.rikkei.bank.exception.BusinessException;
 import com.rikkei.bank.exception.TokenExpiredException;
 import com.rikkei.bank.repository.KycProfileRepository;
@@ -57,8 +53,8 @@ public class AuthServiceImpl implements AuthService {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BusinessException("Tên đăng nhập đã tồn tại trong hệ thống");
         }
-        if (kycProfileRepository.existsByIdCardNumber(request.getIdCardNumber())) {
-            throw new BusinessException("Số CCCD/CMND này đã được đăng ký");
+        if (kycProfileRepository.existsByIdNumber(request.getIdNumber())) {
+            throw new BusinessException("ID Number already exists"); // Hoặc logic tương ứng của bạn
         }
 
         // 2. Tìm Role mặc định là CUSTOMER (Đảm bảo bạn đã insert ROLE_CUSTOMER vào DB trước đó)
@@ -76,8 +72,8 @@ public class AuthServiceImpl implements AuthService {
         // 4. Khởi tạo KycProfile với trạng thái PENDING theo chuẩn SRS
         KycProfile kycProfile = KycProfile.builder()
                 .fullName(request.getFullName())
-                .idCardNumber(request.getIdCardNumber())
-                .status("PENDING")
+                .idNumber(request.getIdNumber())
+                .status(KycStatus.PENDING)
                 .user(user)
                 .build();
 
@@ -113,8 +109,8 @@ public class AuthServiceImpl implements AuthService {
         if (kycProfile == null) {
             kycProfile = KycProfile.builder()
                     .fullName("System Administrator")
-                    .idCardNumber("ADMIN-" + System.currentTimeMillis())
-                    .status("CONFIRM")
+                    .idNumber("ADMIN-" + System.currentTimeMillis())
+                    .status(KycStatus.CONFIRM)
                     .user(userDetails.getUser())
                     .build();
             kycProfile = kycProfileRepository.save(kycProfile);

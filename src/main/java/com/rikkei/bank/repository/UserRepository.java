@@ -16,7 +16,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByUsername(String username);
 
-    // UC-02: Dùng JPQL Constructor Projection để tối ưu hiệu năng RAM, chỉ lấy đúng 4 trường.
-    @Query("SELECT new com.rikkei.bank.dto.UserResponseDto(u.id, u.username, u.role.name, u.isKyc) FROM User u")
+    @Query("SELECT new com.rikkei.bank.dto.UserResponseDto(u.id, u.username, r.name, u.isKyc) FROM User u JOIN u.role r")
     Page<UserResponseDto> findAllUsersProjection(Pageable pageable);
 }

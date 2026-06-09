@@ -3,6 +3,9 @@ package com.rikkei.bank.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "kyc_profiles")
 @Getter
@@ -11,19 +14,23 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class KycProfile {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    private String idNumber;
     private String fullName;
-
-    private String idCardNumber;
-
-    @Column(nullable = false)
-    private String status;
+    private LocalDate dob;
+    private String sex;
+    private String address;
+    private String idCardFrontUrl;
+    private String idCardBackUrl;
+    private String portraitUrl;
+    @Enumerated(EnumType.STRING)
+    private KycStatus status;
+    private LocalDateTime verifiedAt;
+    private LocalDateTime createdAt;
 
     @OneToOne
-    @JoinColumn(name = "user_id", unique = true, nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     @OneToOne(mappedBy = "kycProfile", cascade = CascadeType.ALL)

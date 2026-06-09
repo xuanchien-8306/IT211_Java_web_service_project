@@ -1,9 +1,6 @@
 package com.rikkei.bank.config;
 
-import com.rikkei.bank.entity.Account;
-import com.rikkei.bank.entity.KycProfile;
-import com.rikkei.bank.entity.Role;
-import com.rikkei.bank.entity.User;
+import com.rikkei.bank.entity.*;
 import com.rikkei.bank.repository.AccountRepository;
 import com.rikkei.bank.repository.RoleRepository;
 import com.rikkei.bank.repository.UserRepository;
@@ -63,8 +60,8 @@ public class DataSeeder implements CommandLineRunner {
 
             KycProfile kyc1 = KycProfile.builder()
                     .fullName("Nguyễn Văn A")
-                    .idCardNumber("001200300400")
-                    .status("CONFIRM")
+                    .idNumber("001200300400")
+                    .status(KycStatus.CONFIRM)
                     .user(customer1)
                     .build();
             customer1.setKycProfile(kyc1);
@@ -95,8 +92,8 @@ public class DataSeeder implements CommandLineRunner {
 
             KycProfile kyc2 = KycProfile.builder()
                     .fullName("Trần Thị B")
-                    .idCardNumber("002200300500")
-                    .status("CONFIRM")
+                    .idNumber("002200300500")
+                    .status(KycStatus.CONFIRM)
                     .user(customer2)
                     .build();
             customer2.setKycProfile(kyc2);
