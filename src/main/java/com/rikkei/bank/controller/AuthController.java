@@ -1,10 +1,6 @@
 package com.rikkei.bank.controller;
 
-import com.rikkei.bank.dto.LoginRequest;
-import com.rikkei.bank.dto.RefreshTokenRequest;
-import com.rikkei.bank.dto.RegisterRequest;
-import com.rikkei.bank.dto.ApiResponse;
-import com.rikkei.bank.dto.TokenResponse;
+import com.rikkei.bank.dto.*;
 import com.rikkei.bank.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -19,7 +15,6 @@ public class AuthController {
 
     private final AuthService authService;
 
-    // API: POST /api/v1/auth/register
     // @Valid kích hoạt kiểm tra tính hợp lệ dữ liệu từ DTO (NotBlank, Size...)
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<String>> register(@Valid @RequestBody RegisterRequest request) {
@@ -51,5 +46,18 @@ public class AuthController {
         }
 
         return ResponseEntity.ok(authService.logout(authHeader));
+    }
+
+    @PostMapping("/forgot-password")
+    // Lưu ý: Không cần @PreAuthorize vì hàm này là Public cho người chưa đăng nhập
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+
+        authService.resetPassword(request);
+
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .success(true)
+                .message("Mật khẩu mới đã được gửi vào email của bạn. Vui lòng kiểm tra!")
+                .build());
     }
 }

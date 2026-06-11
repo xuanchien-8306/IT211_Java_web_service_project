@@ -1,5 +1,6 @@
 package com.rikkei.bank.controller;
 
+import com.rikkei.bank.dto.ChangePinRequest;
 import com.rikkei.bank.dto.CreateAccountRequest;
 import com.rikkei.bank.dto.AccountResponse;
 import com.rikkei.bank.dto.ApiResponse;
@@ -36,5 +37,19 @@ public class AccountController {
     @GetMapping("/{accountNumber}/balance")
     public ResponseEntity<ApiResponse<AccountResponse>> getAccountBalance(@PathVariable String accountNumber) {
         return ResponseEntity.ok(accountService.getAccountBalance(accountNumber));
+    }
+
+    @PutMapping("/{accountNumber}/pin")
+    @PreAuthorize("hasAuthority('ROLE_CUSTOMER')") // Chỉ Customer mới có mã PIN
+    public ResponseEntity<ApiResponse<Void>> changePin(
+            @PathVariable String accountNumber,
+            @Valid @RequestBody ChangePinRequest request) {
+
+        accountService.changePin(accountNumber, request);
+
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .success(true)
+                .message("Đổi mã PIN thành công")
+                .build());
     }
 }

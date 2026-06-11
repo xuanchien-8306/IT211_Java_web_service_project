@@ -1,5 +1,6 @@
 package com.rikkei.bank.service.impl;
 
+import com.rikkei.bank.dto.KycApproveRequest;
 import com.rikkei.bank.entity.KycProfile;
 import com.rikkei.bank.entity.KycStatus;
 import com.rikkei.bank.entity.User;
@@ -53,16 +54,33 @@ public class KycServiceImpl implements KycService {
 
     @Override
     @Transactional
-    public KycProfile approveKyc(Long kycId) {
+    public KycProfile approveKyc(Long kycId, KycApproveRequest request) {
         KycProfile profile = kycProfileRepository.findById(kycId)
                 .orElseThrow(() -> new BusinessException("KYC Profile not found"));
 
-        profile.setStatus(KycStatus.CONFIRM);
-        profile.setVerifiedAt(LocalDateTime.now());
+        // Chốt chặn 1: Chỉ xử lý hồ sơ đang chờ duyệt
+        if (profile.getStatus() != KycStatus.PENDING) {
+            throw new BusinessException("Hồ sơ này đã được xử lý (Duyệt hoặc Từ chối) trước đó");
+        }
 
-        User user = profile.getUser();
-        user.setIsKyc(true);
-        userRepository.save(user);
+        // Chốt chặn 2: Đọc trạng thái từ DTO của bạn ("CONFIRM" hoặc "REJECT")
+        if ("CONFIRM".equals(request.getStatus())) {
+
+            // Luồng duyệt thành công
+            profile.setStatus(KycStatus.CONFIRM);
+            profile.setVerifiedAt(LocalDateTime.now());
+
+            User user = profile.getUser();
+            user.setIsKyc(true);
+            userRepository.save(user);
+
+        } else if ("REJECT".equals(request.getStatus())) {
+
+            // Luồng từ chối
+            profile.setStatus(KycStatus.REJECT);
+
+        }
+
         return kycProfileRepository.save(profile);
     }
 

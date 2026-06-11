@@ -1,8 +1,10 @@
 package com.rikkei.bank.controller;
 
 import com.rikkei.bank.dto.ApiResponse;
+import com.rikkei.bank.dto.KycApproveRequest;
 import com.rikkei.bank.entity.KycProfile;
 import com.rikkei.bank.service.KycService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize; // Bắt buộc import
@@ -17,7 +19,7 @@ public class KycController {
 
     private final KycService kycService;
 
-    // API Upload: Public cho Customer đã đăng nhập (Không cần chặn Role vì ai cũng phải upload)
+    // API Upload: Public cho Customer đã đăng nhập
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<KycProfile>> uploadKycDocument(
             @RequestParam("front") MultipartFile front,
@@ -34,14 +36,17 @@ public class KycController {
                 .build());
     }
 
-    // API Duyệt: Chặn cứng, chỉ STAFF hoặc ADMIN mới được phép truy cập
     @PutMapping("/approve/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
-    public ResponseEntity<ApiResponse<KycProfile>> approveKyc(@PathVariable Long id) {
-        KycProfile profile = kycService.approveKyc(id);
+    public ResponseEntity<ApiResponse<KycProfile>> approveKyc(
+            @PathVariable Long id,
+            @Valid @RequestBody KycApproveRequest request) {
+
+        KycProfile profile = kycService.approveKyc(id, request);
+
         return ResponseEntity.ok(ApiResponse.<KycProfile>builder()
                 .success(true)
-                .message("eKYC approved successfully")
+                .message("eKYC processed successfully")
                 .data(profile)
                 .build());
     }

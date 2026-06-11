@@ -1,5 +1,6 @@
 package com.rikkei.bank.service.impl;
 
+import com.rikkei.bank.dto.ChangePinRequest;
 import com.rikkei.bank.dto.CreateAccountRequest;
 import com.rikkei.bank.dto.AccountResponse;
 import com.rikkei.bank.dto.ApiResponse;
@@ -10,6 +11,8 @@ import com.rikkei.bank.exception.BusinessException;
 import com.rikkei.bank.repository.AccountRepository;
 import com.rikkei.bank.repository.UserRepository;
 import com.rikkei.bank.service.AccountService;
+import com.rikkei.bank.util.CurrencyUtils;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -60,7 +63,13 @@ public class AccountServiceImpl implements AccountService {
         return ApiResponse.<AccountResponse>builder()
                 .success(true)
                 .message("Tạo tài khoản thành công")
-                .data(new AccountResponse(account.getId(), account.getAccountNumber(), account.getBalance(), account.getStatus()))
+                .data(AccountResponse.builder()
+                        .id(account.getId())
+                        .accountNumber(account.getAccountNumber())
+                        .balance(account.getBalance())
+                        .status(account.getStatus())
+                        .formattedBalance(CurrencyUtils.formatVND(account.getBalance()))
+                        .build())
                 .build();
     }
 
@@ -76,10 +85,18 @@ public class AccountServiceImpl implements AccountService {
             throw new BusinessException("Bạn không có quyền truy cập tài khoản này");
         }
 
+        AccountResponse response = AccountResponse.builder()
+                .id(account.getId())
+                .accountNumber(account.getAccountNumber())
+                .balance(account.getBalance())
+                .status(account.getStatus())
+                .formattedBalance(CurrencyUtils.formatVND(account.getBalance()))
+                .build();
+
         return ApiResponse.<AccountResponse>builder()
                 .success(true)
                 .message("Truy vấn số dư thành công")
-                .data(new AccountResponse(account.getId(), account.getAccountNumber(), account.getBalance(), account.getStatus()))
+                .data(response)
                 .build();
     }
 
@@ -87,7 +104,13 @@ public class AccountServiceImpl implements AccountService {
     public ApiResponse<List<AccountResponse>> getMyAccounts() {
         User user = getCurrentUser();
         List<AccountResponse> accounts = user.getAccounts().stream()
-                .map(a -> new AccountResponse(a.getId(), a.getAccountNumber(), a.getBalance(), a.getStatus()))
+                .map(a -> AccountResponse.builder()
+                        .id(a.getId())
+                        .accountNumber(a.getAccountNumber())
+                        .balance(a.getBalance())
+                        .status(a.getStatus())
+                        .formattedBalance(CurrencyUtils.formatVND(a.getBalance()))
+                        .build())
                 .collect(Collectors.toList());
 
         return ApiResponse.<List<AccountResponse>>builder()
@@ -95,5 +118,35 @@ public class AccountServiceImpl implements AccountService {
                 .message("Lấy danh sách tài khoản thành công")
                 .data(accounts)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void changePin(String accountNumber, ChangePinRequest request) {
+        // 1. Kiểm tra 2 mã PIN mới có khớp nhau không
+        if (!request.getNewPin().equals(request.getConfirmPin())) {
+            throw new BusinessException("Mã PIN xác nhận không khớp với mã PIN mới");
+        }
+
+        // 2. Lấy thông tin user đang đăng nhập
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // 3. Tìm tài khoản dưới DB
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new BusinessException("Tài khoản không tồn tại"));
+
+        // 4. Kiểm tra quyền sở hữu (Bắt buộc phải là chính chủ)
+        if (!account.getUser().getUsername().equals(currentUsername)) {
+            throw new BusinessException("Bạn không có quyền đổi mã PIN của tài khoản này");
+        }
+
+        // 5. Kiểm tra mã PIN cũ có đúng không (Dùng hàm matches của BCrypt)
+        if (!passwordEncoder.matches(request.getOldPin(), account.getPin())) {
+            throw new BusinessException("Mã PIN cũ không chính xác");
+        }
+
+        // 6. Mã hóa mã PIN mới và lưu vào DB
+        account.setPin(passwordEncoder.encode(request.getNewPin()));
+        accountRepository.save(account);
     }
 }

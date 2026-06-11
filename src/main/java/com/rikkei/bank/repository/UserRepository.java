@@ -14,6 +14,8 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
 
+    Optional<User> findByEmail(String email);
+
     boolean existsByUsername(String username);
 
     @Query("SELECT new com.rikkei.bank.dto.UserResponseDto(u.id, u.username, r.name, u.isKyc) FROM User u JOIN u.role r")

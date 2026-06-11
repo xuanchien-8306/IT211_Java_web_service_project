@@ -1,10 +1,6 @@
 package com.rikkei.bank.service.impl;
 
-import com.rikkei.bank.dto.LoginRequest;
-import com.rikkei.bank.dto.RefreshTokenRequest;
-import com.rikkei.bank.dto.RegisterRequest;
-import com.rikkei.bank.dto.ApiResponse;
-import com.rikkei.bank.dto.TokenResponse;
+import com.rikkei.bank.dto.*;
 import com.rikkei.bank.entity.*;
 import com.rikkei.bank.exception.BusinessException;
 import com.rikkei.bank.exception.TokenExpiredException;
@@ -201,5 +197,27 @@ public class AuthServiceImpl implements AuthService {
                 .success(true)
                 .message("Đăng xuất thành công")
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ForgotPasswordRequest request) {
+        // 1. Tìm user theo Email
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BusinessException("Email không tồn tại trong hệ thống"));
+
+        // 2. Tự động sinh ra một mật khẩu ngẫu nhiên gồm 6 chữ số
+        String newPassword = String.format("%06d", new java.util.Random().nextInt(999999));
+
+        // 3. Mã hóa và lưu mật khẩu mới
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // 4. Giả lập gửi Email thông báo (In ra Console để bạn dễ dàng test)
+        System.out.println("==================================================");
+        System.out.println("ĐANG GỬI EMAIL TỚI: " + user.getEmail());
+        System.out.println("Mật khẩu mới của bạn là: " + newPassword);
+        System.out.println("Vui lòng đăng nhập lại và đổi mật khẩu ngay lập tức!");
+        System.out.println("==================================================");
     }
 }

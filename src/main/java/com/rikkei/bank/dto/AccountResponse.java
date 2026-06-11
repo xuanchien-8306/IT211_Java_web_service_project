@@ -15,4 +15,5 @@ public class AccountResponse {
     private String accountNumber;
     private BigDecimal balance;
     private String status;
+    private String formattedBalance;
 }

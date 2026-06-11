@@ -67,17 +67,28 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("User not found"));
 
-        Role role = roleRepository.findById(request.getRoleId())
-                .orElseThrow(() -> new BusinessException("Role not found"));
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail());
+        }
 
-        user.setEmail(request.getEmail());
-        user.setPhoneNumber(request.getPhoneNumber());
-        user.setIsActive(request.getIsActive());
-        user.setRole(role);
+        if (request.getPhoneNumber() != null) {
+            user.setPhoneNumber(request.getPhoneNumber());
+        }
+
+        if (request.getIsActive() != null) {
+            user.setIsActive(request.getIsActive());
+        }
+
+        if (request.getRoleId() != null) {
+            Role role = roleRepository.findById(request.getRoleId())
+                    .orElseThrow(() -> new BusinessException("Role not found"));
+            user.setRole(role);
+        }
 
         user = userRepository.save(user);
-        return new UserResponseDto(user.getId(), user.getUsername(), user.getRole().getName(), user.getIsKyc());    }
 
+        return new UserResponseDto(user.getId(), user.getUsername(), user.getRole().getName(), user.getIsKyc());
+    }
     @Override
     @Transactional
     public void deleteUser(Long id) {

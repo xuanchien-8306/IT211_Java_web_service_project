@@ -15,13 +15,4 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final AdminService adminService;
-
-    // Yêu cầu quyền ROLE_ADMIN
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @PutMapping("/kyc/approve/{userId}")
-    public ResponseEntity<ApiResponse<String>> approveKyc(
-            @PathVariable Long userId,
-            @Valid @RequestBody KycApproveRequest request) {
-        return ResponseEntity.ok(adminService.approveKyc(userId, request));
-    }
 }
