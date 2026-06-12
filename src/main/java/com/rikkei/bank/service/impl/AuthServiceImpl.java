@@ -43,29 +43,24 @@ public class AuthServiceImpl implements AuthService {
     private long refreshExpiration;
 
     @Override
-    @Transactional // Đảm bảo nếu lỗi ở bất kỳ bước nào thì toàn bộ dữ liệu (User, KycProfile) sẽ rollback
     public ApiResponse<String> register(RegisterRequest request) {
-        // 1. Kiểm tra tồn tại
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BusinessException("Tên đăng nhập đã tồn tại trong hệ thống");
         }
         if (kycProfileRepository.existsByIdNumber(request.getIdNumber())) {
-            throw new BusinessException("ID Number already exists"); // Hoặc logic tương ứng của bạn
+            throw new BusinessException("ID Number already exists");
         }
 
-        // 2. Tìm Role mặc định là CUSTOMER (Đảm bảo bạn đã insert ROLE_CUSTOMER vào DB trước đó)
         Role userRole = roleRepository.findByName("ROLE_CUSTOMER")
                 .orElseThrow(() -> new BusinessException("Lỗi cấu hình: Không tìm thấy Role CUSTOMER"));
 
-        // 3. Khởi tạo User
         User user = User.builder()
                 .username(request.getUsername())
-                .password(passwordEncoder.encode(request.getPassword())) // Mã hóa BCrypt
+                .password(passwordEncoder.encode(request.getPassword()))
                 .role(userRole)
-                .isKyc(false) // Mới tạo chưa duyệt eKYC
+                .isKyc(false)
                 .build();
 
-        // 4. Khởi tạo KycProfile với trạng thái PENDING theo chuẩn SRS
         KycProfile kycProfile = KycProfile.builder()
                 .fullName(request.getFullName())
                 .idNumber(request.getIdNumber())
@@ -73,10 +68,8 @@ public class AuthServiceImpl implements AuthService {
                 .user(user)
                 .build();
 
-        // Thiết lập quan hệ 2 chiều
         user.setKycProfile(kycProfile);
 
-        // Lưu vào Database (Nhờ cấu hình CascadeType.ALL ở Entity User, KycProfile sẽ tự động được lưu theo)
         userRepository.save(user);
 
         return ApiResponse.<String>builder()
@@ -88,18 +81,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public ApiResponse<TokenResponse> login(LoginRequest request) {
-        // 1. Spring Security thực hiện đối chiếu Username/Password trong DB
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
-        // 2. Ép kiểu để lấy CustomUserDetails
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        // 3. Tạo JWT Access Token
         String accessToken = jwtProvider.generateToken(userDetails);
 
-        // 4. Lấy KycProfile và chạy cơ chế phòng thủ NullPointerException
         KycProfile kycProfile = userDetails.getUser().getKycProfile();
 
         if (kycProfile == null) {
@@ -113,27 +102,21 @@ public class AuthServiceImpl implements AuthService {
             userDetails.getUser().setKycProfile(kycProfile);
         }
 
-        // 5 & 6. Xử lý Refresh Token: CẬP NHẬT ĐÈ THAY VÌ XÓA
         RefreshToken refreshToken = kycProfile.getRefreshToken();
 
         if (refreshToken == null) {
-            // Nếu chưa có (đăng nhập lần đầu), tạo đối tượng mới
             refreshToken = RefreshToken.builder()
                     .kycProfile(kycProfile)
                     .build();
         }
 
-        // Cập nhật giá trị Token và thời gian hết hạn mới
         refreshToken.setToken(UUID.randomUUID().toString());
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshExpiration));
 
-        // Lưu xuống DB (JPA sẽ tự động Update nếu đã tồn tại)
         refreshTokenRepository.save(refreshToken);
 
-        // Đồng bộ lại vào đối tượng kycProfile đang ở trong RAM
         kycProfile.setRefreshToken(refreshToken);
 
-        // 7. Đóng gói kết quả
         TokenResponse tokenResponse = TokenResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken.getToken())
@@ -150,17 +133,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public ApiResponse<TokenResponse> refreshToken(RefreshTokenRequest request) {
-        // 1. Tìm Refresh Token trong DB
         RefreshToken refreshToken = refreshTokenRepository.findByToken(request.getRefreshToken())
                 .orElseThrow(() -> new BusinessException("Refresh Token không hợp lệ hoặc không tồn tại"));
 
-        // 2. Kiểm tra hạn sử dụng
         if (refreshToken.getExpiryDate().compareTo(Instant.now()) < 0) {
             refreshTokenRepository.delete(refreshToken);
             throw new TokenExpiredException("Refresh Token đã hết hạn. Vui lòng đăng nhập lại.");
         }
 
-        // 3. Lấy thông tin User để sinh Access Token mới
         User user = refreshToken.getKycProfile().getUser();
         CustomUserDetails userDetails = new CustomUserDetails(user);
         String newAccessToken = jwtProvider.generateToken(userDetails);
@@ -180,12 +160,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ApiResponse<String> logout(String accessToken) {
-        // Cắt bỏ chuỗi "Bearer " nếu có
         if (accessToken != null && accessToken.startsWith("Bearer ")) {
             accessToken = accessToken.substring(7);
         }
 
-        // Đưa Access Token hiện tại vào Blacklist để Filter chặn các Request tiếp theo
         TokenBlacklist blacklist = TokenBlacklist.builder()
                 .token(accessToken)
                 .revokedAt(LocalDateTime.now())
@@ -202,18 +180,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void resetPassword(ForgotPasswordRequest request) {
-        // 1. Tìm user theo Email
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BusinessException("Email không tồn tại trong hệ thống"));
 
-        // 2. Tự động sinh ra một mật khẩu ngẫu nhiên gồm 6 chữ số
         String newPassword = String.format("%06d", new java.util.Random().nextInt(999999));
 
-        // 3. Mã hóa và lưu mật khẩu mới
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        // 4. Giả lập gửi Email thông báo (In ra Console để bạn dễ dàng test)
         System.out.println("==================================================");
         System.out.println("ĐANG GỬI EMAIL TỚI: " + user.getEmail());
         System.out.println("Mật khẩu mới của bạn là: " + newPassword);

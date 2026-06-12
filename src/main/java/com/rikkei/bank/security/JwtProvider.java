@@ -19,12 +19,10 @@ public class JwtProvider {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    // Tạo mã Secret Key chuẩn HMAC-SHA từ chuỗi cấu hình
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    // Tạo Access Token dựa trên thông tin User
     public String generateToken(CustomUserDetails userDetails) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
@@ -37,23 +35,21 @@ public class JwtProvider {
                 .compact();
     }
 
-    // Trích xuất username từ Token
     public String getUsernameFromToken(String token) {
         return Jwts.parser()
-                .verifyWith((javax.crypto.SecretKey) getSigningKey()) // Cú pháp mới của 0.12.x
+                .verifyWith((javax.crypto.SecretKey) getSigningKey())
                 .build()
-                .parseSignedClaims(token) // Cú pháp mới
+                .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
     }
 
-    // Kiểm tra tính hợp lệ của Token
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                    .verifyWith((javax.crypto.SecretKey) getSigningKey()) // Cú pháp mới của 0.12.x
+                    .verifyWith((javax.crypto.SecretKey) getSigningKey())
                     .build()
-                    .parseSignedClaims(token); // Cú pháp mới
+                    .parseSignedClaims(token);
             return true;
         } catch (MalformedJwtException ex) {
             log.error("Token không đúng định dạng");

@@ -26,7 +26,6 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        // 1. Tạo Roles
         if (roleRepository.count() == 0) {
             roleRepository.save(new Role(null, "ROLE_ADMIN", null));
             roleRepository.save(new Role(null, "ROLE_CUSTOMER", null));
@@ -34,7 +33,6 @@ public class DataSeeder implements CommandLineRunner {
             log.info("=> Seeded Roles.");
         }
 
-        // 2. Tạo Admin
         if (!userRepository.existsByUsername("admin")) {
             Role adminRole = roleRepository.findByName("ROLE_ADMIN").get();
             User admin = User.builder()
@@ -47,7 +45,6 @@ public class DataSeeder implements CommandLineRunner {
             log.info("=> Seeded Admin User.");
         }
 
-        // 3. Tạo Customer 1 (Kèm Account có sẵn 5 triệu để test chuyển khoản)
         if (!userRepository.existsByUsername("customer1")) {
             Role customerRole = roleRepository.findByName("ROLE_CUSTOMER").get();
 
@@ -68,7 +65,7 @@ public class DataSeeder implements CommandLineRunner {
 
             Account acc1 = Account.builder()
                     .accountNumber("100000001")
-                    .balance(new BigDecimal("5000000")) // Có sẵn 5 triệu
+                    .balance(new BigDecimal("5000000"))
                     .pin(passwordEncoder.encode("123456"))
                     .status("ACTIVE")
                     .user(customer1)
@@ -79,7 +76,6 @@ public class DataSeeder implements CommandLineRunner {
             log.info("=> Seeded Customer 1 (Acc: 100000001 - Balance: 5M).");
         }
 
-        // 4. Tạo Customer 2 (Kèm Account 0 đồng để nhận tiền)
         if (!userRepository.existsByUsername("customer2")) {
             Role customerRole = roleRepository.findByName("ROLE_CUSTOMER").get();
 

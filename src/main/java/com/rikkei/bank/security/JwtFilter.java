@@ -30,16 +30,13 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             String jwt = getJwtFromRequest(request);
 
-            // 1. Kiểm tra Token có tồn tại và hợp lệ không
             if (StringUtils.hasText(jwt) && jwtProvider.validateToken(jwt)) {
 
-                // 2. Kiểm tra Token có nằm trong Blacklist (đã logout) không
                 if (tokenBlacklistRepository.existsByToken(jwt)) {
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token đã bị thu hồi (Blacklisted)");
                     return;
                 }
 
-                // 3. Lấy thông tin user và gán vào Security Context
                 String username = jwtProvider.getUsernameFromToken(jwt);
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
 
@@ -53,11 +50,9 @@ public class JwtFilter extends OncePerRequestFilter {
             logger.error("Không thể thiết lập xác thực người dùng trong Security Context", ex);
         }
 
-        // Cho phép request đi tiếp tới Controller
         filterChain.doFilter(request, response);
     }
 
-    // Bóc tách token từ header "Authorization: Bearer <token>"
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {

@@ -15,7 +15,6 @@ import java.util.Collections;
 public class CustomUserDetails implements UserDetails {
     private User user;
 
-    // Chuyển đổi Role của Database thành GrantedAuthority của Spring Security
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singleton(new SimpleGrantedAuthority(user.getRole().getName()));
@@ -31,7 +30,6 @@ public class CustomUserDetails implements UserDetails {
         return user.getUsername();
     }
 
-    // Các cấu hình dưới đây mặc định cho phép tài khoản hoạt động
     @Override
     public boolean isAccountNonExpired() { return true; }
 

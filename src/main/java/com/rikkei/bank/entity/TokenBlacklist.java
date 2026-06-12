@@ -17,7 +17,7 @@ public class TokenBlacklist {
     private Long id;
 
     @Column(nullable = false, unique = true, length = 500)
-    private String token; // Lưu AccessToken đã bị thu hồi khi Logout
+    private String token;
 
     private LocalDateTime revokedAt;
 }

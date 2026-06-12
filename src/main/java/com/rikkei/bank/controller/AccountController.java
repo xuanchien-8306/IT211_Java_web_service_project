@@ -20,7 +20,6 @@ public class AccountController {
 
     private final AccountService accountService;
 
-    // Yêu cầu quyền ROLE_CUSTOMER
     @PreAuthorize("hasAuthority('ROLE_CUSTOMER')")
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<AccountResponse>> createAccount(@Valid @RequestBody CreateAccountRequest request) {
@@ -40,7 +39,7 @@ public class AccountController {
     }
 
     @PutMapping("/{accountNumber}/pin")
-    @PreAuthorize("hasAuthority('ROLE_CUSTOMER')") // Chỉ Customer mới có mã PIN
+    @PreAuthorize("hasAuthority('ROLE_CUSTOMER')")
     public ResponseEntity<ApiResponse<Void>> changePin(
             @PathVariable String accountNumber,
             @Valid @RequestBody ChangePinRequest request) {

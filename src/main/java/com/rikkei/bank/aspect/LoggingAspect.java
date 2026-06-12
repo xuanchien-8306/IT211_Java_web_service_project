@@ -18,7 +18,6 @@ import java.time.format.DateTimeFormatter;
 @Slf4j
 public class LoggingAspect {
 
-    // Định dạng thời gian in ra log cho đẹp
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Pointcut("execution(* com.rikkei.bank.service.impl.TransactionServiceImpl.transfer(..))")
@@ -27,13 +26,9 @@ public class LoggingAspect {
     @AfterReturning(pointcut = "transferOperation()", returning = "result")
     public void logSuccessfulTransfer(JoinPoint joinPoint, Object result) {
         try {
-            // 1. Lấy username của người đang thao tác từ Token
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
-
-            // 2. Lấy tham số (TransferRequest) mà người dùng truyền vào Controller
             TransferRequest request = extractTransferRequest(joinPoint);
 
-            // 3. Ghi log chuẩn định dạng hệ thống
             if (request != null) {
                 log.info("\n================ [AUDIT LOG - SUCCESS] ================" +
                                 "\nTime        : {}" +
@@ -70,7 +65,7 @@ public class LoggingAspect {
                                 "\nFrom Account: {}" +
                                 "\nTo Account  : {}" +
                                 "\nAmount      : {} VNĐ" +
-                                "\nReason      : {}" + // In ra lý do thất bại (exception message)
+                                "\nReason      : {}" +
                                 "\n=======================================================",
                         LocalDateTime.now().format(FORMATTER),
                         username,

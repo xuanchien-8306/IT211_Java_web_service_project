@@ -7,7 +7,7 @@ import com.rikkei.bank.service.KycService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize; // Bắt buộc import
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,7 +19,6 @@ public class KycController {
 
     private final KycService kycService;
 
-    // API Upload: Public cho Customer đã đăng nhập
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<KycProfile>> uploadKycDocument(
             @RequestParam("front") MultipartFile front,
@@ -31,7 +30,7 @@ public class KycController {
 
         return ResponseEntity.ok(ApiResponse.<KycProfile>builder()
                 .success(true)
-                .message("eKYC documents uploaded successfully. Status: PENDING")
+                .message("Tải lên hồ sơ eKYC thành công. Trạng thái: CHỜ DUYỆT")
                 .data(profile)
                 .build());
     }
@@ -46,7 +45,7 @@ public class KycController {
 
         return ResponseEntity.ok(ApiResponse.<KycProfile>builder()
                 .success(true)
-                .message("eKYC processed successfully")
+                .message("Xử lý hồ sơ eKYC thành công")
                 .data(profile)
                 .build());
     }

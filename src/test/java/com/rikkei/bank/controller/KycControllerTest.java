@@ -12,6 +12,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.rikkei.bank.security.JwtFilter;
+import com.rikkei.bank.security.JwtProvider;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -20,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(KycController.class)
-@AutoConfigureMockMvc(addFilters = false) // Tắt Spring Security để test độc lập logic Controller
+@AutoConfigureMockMvc(addFilters = false)
 class KycControllerTest {
 
     @Autowired
@@ -31,6 +34,12 @@ class KycControllerTest {
 
     @MockitoBean
     private KycService kycService;
+
+    @MockitoBean
+    private JwtProvider jwtProvider;
+
+    @MockitoBean
+    private JwtFilter jwtFilter;
 
     @Test
     void approveKyc_ValidConfirmRequest_Returns200() throws Exception {
@@ -44,10 +53,9 @@ class KycControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("eKYC processed successfully"));
+                .andExpect(jsonPath("$.message").value("Xử lý hồ sơ eKYC thành công"));
     }
 
-    // Test 7: Controller nhận body "REJECT" hợp lệ -> Trả về 200 OK
     @Test
     void approveKyc_ValidRejectRequest_Returns200() throws Exception {
         KycApproveRequest request = new KycApproveRequest();
@@ -61,23 +69,10 @@ class KycControllerTest {
                 .andExpect(status().isOk());
     }
 
-    // Test 8: Controller chặn khi thiếu thuộc tính status (Validate @NotBlank) -> Trả về 400
     @Test
     void approveKyc_MissingStatusField_Returns400() throws Exception {
         KycApproveRequest request = new KycApproveRequest();
-        request.setStatus(""); // Cố tình để rỗng
-
-        mockMvc.perform(put("/api/v1/kyc/approve/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest()); // Do bật @Valid ở Controller
-    }
-
-    // Test 9: Controller chặn khi gõ sai chữ CONFIRM/REJECT (Validate @Pattern) -> Trả về 400
-    @Test
-    void approveKyc_InvalidStatusString_Returns400() throws Exception {
-        KycApproveRequest request = new KycApproveRequest();
-        request.setStatus("DUYET"); // Chữ không nằm trong Regex
+        request.setStatus("");
 
         mockMvc.perform(put("/api/v1/kyc/approve/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -85,12 +80,21 @@ class KycControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // Test 10: Controller chặn khi không gửi Body -> Trả về 400 Bad Request
+    @Test
+    void approveKyc_InvalidStatusString_Returns400() throws Exception {
+        KycApproveRequest request = new KycApproveRequest();
+        request.setStatus("DUYET");
+
+        mockMvc.perform(put("/api/v1/kyc/approve/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
     @Test
     void approveKyc_NoBody_Returns400() throws Exception {
         mockMvc.perform(put("/api/v1/kyc/approve/1")
                         .contentType(MediaType.APPLICATION_JSON))
-                // Bỏ trống hoàn toàn .content()
                 .andExpect(status().isBadRequest());
     }
 }

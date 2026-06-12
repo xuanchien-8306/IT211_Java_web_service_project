@@ -14,6 +14,7 @@ import com.rikkei.bank.repository.AccountRepository;
 import com.rikkei.bank.repository.TransactionRepository;
 import com.rikkei.bank.repository.UserRepository;
 import com.rikkei.bank.service.TransactionService;
+import com.rikkei.bank.util.CurrencyUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -58,7 +59,6 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidPinException("Mã PIN không chính xác");
         }
 
-        // Chống Deadlock: Khóa tài khoản có STT nhỏ hơn trước
         String firstLock = request.getFromAccount().compareTo(request.getToAccount()) < 0
                 ? request.getFromAccount() : request.getToAccount();
         String secondLock = request.getFromAccount().compareTo(request.getToAccount()) < 0
@@ -116,6 +116,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public ApiResponse<Page<TransactionResponse>> getTransactionHistory(String accountNumber, int page, int size) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+
         User currentUser = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new BusinessException("Lỗi xác thực"));
 
@@ -131,11 +132,14 @@ public class TransactionServiceImpl implements TransactionService {
 
         Page<TransactionResponse> responsePage = transactionPage.map(tx -> {
             String type = tx.getFromAccount().getAccountNumber().equals(accountNumber) ? "DEBIT" : "CREDIT";
+
+
             return TransactionResponse.builder()
                     .id(tx.getId())
                     .fromAccount(tx.getFromAccount().getAccountNumber())
                     .toAccount(tx.getToAccount().getAccountNumber())
                     .amount(tx.getAmount())
+                        .formattedAmount(CurrencyUtils.formatVND(tx.getAmount()))
                     .content(tx.getContent())
                     .timestamp(tx.getTimestamp())
                     .type(type)

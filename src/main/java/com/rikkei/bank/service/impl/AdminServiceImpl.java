@@ -26,9 +26,7 @@ public class AdminServiceImpl implements AdminService {
 
         KycProfile kycProfile = user.getKycProfile();
 
-        // Cập nhật trạng thái trong bảng KYC
         kycProfile.setStatus(KycStatus.CONFIRM);
-        // Cập nhật cờ isKyc trong bảng User
         if ("CONFIRM".equals(request.getStatus())) {
             user.setIsKyc(true);
         } else {

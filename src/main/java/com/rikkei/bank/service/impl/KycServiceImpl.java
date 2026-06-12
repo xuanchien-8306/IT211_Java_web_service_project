@@ -58,15 +58,12 @@ public class KycServiceImpl implements KycService {
         KycProfile profile = kycProfileRepository.findById(kycId)
                 .orElseThrow(() -> new BusinessException("KYC Profile not found"));
 
-        // Chốt chặn 1: Chỉ xử lý hồ sơ đang chờ duyệt
         if (profile.getStatus() != KycStatus.PENDING) {
             throw new BusinessException("Hồ sơ này đã được xử lý (Duyệt hoặc Từ chối) trước đó");
         }
 
-        // Chốt chặn 2: Đọc trạng thái từ DTO của bạn ("CONFIRM" hoặc "REJECT")
         if ("CONFIRM".equals(request.getStatus())) {
 
-            // Luồng duyệt thành công
             profile.setStatus(KycStatus.CONFIRM);
             profile.setVerifiedAt(LocalDateTime.now());
 
@@ -76,7 +73,6 @@ public class KycServiceImpl implements KycService {
 
         } else if ("REJECT".equals(request.getStatus())) {
 
-            // Luồng từ chối
             profile.setStatus(KycStatus.REJECT);
 
         }

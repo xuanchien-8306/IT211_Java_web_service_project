@@ -29,9 +29,8 @@ public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder; // Dùng BCrypt để mã hóa mã PIN
+    private final PasswordEncoder passwordEncoder;
 
-    // Lấy User đang đăng nhập từ Security Context (Token)
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByUsername(username)
@@ -42,18 +41,16 @@ public class AccountServiceImpl implements AccountService {
     public ApiResponse<AccountResponse> createAccount(CreateAccountRequest request) {
         User user = getCurrentUser();
 
-        // Kiểm tra xem đã KYC chưa (Theo SRS, phải KYC mới được mở tài khoản giao dịch)
         if (!user.getIsKyc()) {
             throw new BusinessException("Bạn cần hoàn tất định danh eKYC để mở tài khoản");
         }
 
-        // Sinh ngẫu nhiên số tài khoản 9 số (VD: 100000001)
         String newAccountNumber = String.valueOf(100000000L + new Random().nextInt(900000000));
 
         Account account = Account.builder()
                 .accountNumber(newAccountNumber)
                 .balance(BigDecimal.ZERO)
-                .pin(passwordEncoder.encode(request.getPin())) // Mã hóa PIN theo chuẩn SRS
+                .pin(passwordEncoder.encode(request.getPin()))
                 .status("ACTIVE")
                 .user(user)
                 .build();
@@ -80,7 +77,6 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new AccountNotFoundException("Tài khoản không tồn tại"));
 
-        // Bảo mật: Khách hàng chỉ được xem số dư tài khoản của chính mình
         if (!account.getUser().getId().equals(user.getId())) {
             throw new BusinessException("Bạn không có quyền truy cập tài khoản này");
         }
@@ -123,29 +119,23 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public void changePin(String accountNumber, ChangePinRequest request) {
-        // 1. Kiểm tra 2 mã PIN mới có khớp nhau không
         if (!request.getNewPin().equals(request.getConfirmPin())) {
             throw new BusinessException("Mã PIN xác nhận không khớp với mã PIN mới");
         }
 
-        // 2. Lấy thông tin user đang đăng nhập
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // 3. Tìm tài khoản dưới DB
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new BusinessException("Tài khoản không tồn tại"));
 
-        // 4. Kiểm tra quyền sở hữu (Bắt buộc phải là chính chủ)
         if (!account.getUser().getUsername().equals(currentUsername)) {
             throw new BusinessException("Bạn không có quyền đổi mã PIN của tài khoản này");
         }
 
-        // 5. Kiểm tra mã PIN cũ có đúng không (Dùng hàm matches của BCrypt)
         if (!passwordEncoder.matches(request.getOldPin(), account.getPin())) {
             throw new BusinessException("Mã PIN cũ không chính xác");
         }
 
-        // 6. Mã hóa mã PIN mới và lưu vào DB
         account.setPin(passwordEncoder.encode(request.getNewPin()));
         accountRepository.save(account);
     }

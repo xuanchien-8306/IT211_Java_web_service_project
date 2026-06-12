@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    // UC-06: Truy vấn sao kê bằng phép toán OR để quét cả giao dịch gửi đi và nhận về
     @Query("SELECT t FROM Transaction t WHERE t.fromAccount.accountNumber = :accNo OR t.toAccount.accountNumber = :accNo ORDER BY t.timestamp DESC")
     Page<Transaction> findTransactionHistory(@Param("accNo") String accountNumber, Pageable pageable);
 }

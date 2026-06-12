@@ -1,5 +1,7 @@
 package com.rikkei.bank.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,8 +18,14 @@ public class TransactionResponse {
     private Long id;
     private String fromAccount;
     private String toAccount;
+
+    @JsonIgnore
     private BigDecimal amount;
+
+    @JsonProperty("amount")
+    private String formattedAmount;
+
     private String content;
     private LocalDateTime timestamp;
-    private String type; // Tự tính toán (DEBIT - trừ tiền, CREDIT - cộng tiền) ở tầng Service
+    private String type;
 }

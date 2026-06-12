@@ -18,7 +18,6 @@ public class TransactionController {
 
     private final TransactionService transactionService;
 
-    // API thực hiện chuyển tiền (Step 6, 8, 9 trong kịch bản Postman của bạn)
     @PreAuthorize("hasAuthority('ROLE_CUSTOMER')")
     @PostMapping("/transfer")
     public ResponseEntity<ApiResponse<TransactionResponse>> transfer(@Valid @RequestBody TransferRequest request) {

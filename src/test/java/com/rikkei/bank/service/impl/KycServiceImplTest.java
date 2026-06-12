@@ -55,7 +55,6 @@ class KycServiceImplTest {
         rejectRequest.setStatus("REJECT");
     }
 
-    // Test 1: Duyệt KYC thành công (CONFIRM)
     @Test
     void approveKyc_Confirm_Success() {
         when(kycProfileRepository.findById(100L)).thenReturn(Optional.of(pendingProfile));
@@ -68,7 +67,6 @@ class KycServiceImplTest {
         verify(userRepository, times(1)).save(testUser);
     }
 
-    // Test 2: Từ chối KYC thành công (REJECT)
     @Test
     void approveKyc_Reject_Success() {
         when(kycProfileRepository.findById(100L)).thenReturn(Optional.of(pendingProfile));
@@ -77,11 +75,10 @@ class KycServiceImplTest {
         KycProfile result = kycService.approveKyc(100L, rejectRequest);
 
         assertEquals(KycStatus.REJECT, result.getStatus());
-        assertFalse(testUser.getIsKyc()); // Vẫn false vì bị từ chối
-        verify(userRepository, never()).save(any(User.class)); // Không cần update User
+        assertFalse(testUser.getIsKyc());
+        verify(userRepository, never()).save(any(User.class));
     }
 
-    // Test 3: Lỗi không tìm thấy hồ sơ (Profile Not Found)
     @Test
     void approveKyc_ProfileNotFound_ThrowsException() {
         when(kycProfileRepository.findById(999L)).thenReturn(Optional.empty());
@@ -93,10 +90,9 @@ class KycServiceImplTest {
         assertEquals("KYC Profile not found", exception.getMessage());
     }
 
-    // Test 4: Lỗi hồ sơ đã được xử lý trước đó (Không còn PENDING)
     @Test
     void approveKyc_NotPending_ThrowsException() {
-        pendingProfile.setStatus(KycStatus.CONFIRM); // Ép trạng thái thành đã duyệt
+        pendingProfile.setStatus(KycStatus.CONFIRM);
         when(kycProfileRepository.findById(100L)).thenReturn(Optional.of(pendingProfile));
 
         BusinessException exception = assertThrows(BusinessException.class, () -> {
@@ -106,14 +102,11 @@ class KycServiceImplTest {
         assertEquals("Hồ sơ này đã được xử lý (Duyệt hoặc Từ chối) trước đó", exception.getMessage());
     }
 
-    // Test 5: Lỗi gọi hàm khi truyền request null
     @Test
     void approveKyc_NullRequest_HandlesSafely() {
         when(kycProfileRepository.findById(100L)).thenReturn(Optional.of(pendingProfile));
         when(kycProfileRepository.save(any(KycProfile.class))).thenReturn(pendingProfile);
 
-        // Code service hiện tại không xử lý null status ở request, nó sẽ bỏ qua và mặc định lưu lại trạng thái cũ
-        // Đây là bài test để đảm bảo code không bị NullPointerException khi ở Service
         KycApproveRequest emptyRequest = new KycApproveRequest();
 
         assertDoesNotThrow(() -> {

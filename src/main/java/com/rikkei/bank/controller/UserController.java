@@ -25,7 +25,7 @@ public class UserController {
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(ApiResponse.<Page<UserResponseDto>>builder()
                 .success(true)
-                .message("Fetched users successfully")
+                .message("Lấy danh sách người dùng thành công")
                 .data(userService.getAllUsers(page, size))
                 .build());
     }
@@ -34,7 +34,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.<UserResponseDto>builder()
                 .success(true)
-                .message("Fetched user successfully")
+                .message("Lấy thông tin người dùng thành công")
                 .data(userService.getUserById(id))
                 .build());
     }
@@ -43,7 +43,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponseDto>> createUser(@RequestBody UserCreateRequest request) {
         return ResponseEntity.ok(ApiResponse.<UserResponseDto>builder()
                 .success(true)
-                .message("User created successfully")
+                .message("Tạo người dùng thành công")
                 .data(userService.createUser(request))
                 .build());
     }
@@ -54,7 +54,7 @@ public class UserController {
             @RequestBody UserUpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.<UserResponseDto>builder()
                 .success(true)
-                .message("User updated successfully")
+                .message("Cập nhật người dùng thành công")
                 .data(userService.updateUser(id, request))
                 .build());
     }
@@ -64,7 +64,7 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .success(true)
-                .message("User deactivated successfully")
+                .message("Vô hiệu hóa người dùng thành công")
                 .build());
     }
 }
