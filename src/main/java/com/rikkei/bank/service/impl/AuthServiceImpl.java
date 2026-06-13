@@ -43,12 +43,12 @@ public class AuthServiceImpl implements AuthService {
     private long refreshExpiration;
 
     @Override
-    public ApiResponse<String> register(RegisterRequest request) {
+    public ApiResponse<RegisterResponse> register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BusinessException("Tên đăng nhập đã tồn tại trong hệ thống");
         }
         if (kycProfileRepository.existsByIdNumber(request.getIdNumber())) {
-            throw new BusinessException("ID Number already exists");
+            throw new BusinessException("CCCD/CMND đã tồn tại");
         }
 
         Role userRole = roleRepository.findByName("ROLE_CUSTOMER")
@@ -70,11 +70,21 @@ public class AuthServiceImpl implements AuthService {
 
         user.setKycProfile(kycProfile);
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        return ApiResponse.<String>builder()
+        RegisterResponse response = RegisterResponse.builder()
+                .id(savedUser.getId())
+                .username(savedUser.getUsername())
+                .fullName(savedUser.getKycProfile().getFullName())
+                .idNumber(savedUser.getKycProfile().getIdNumber())
+                .role(savedUser.getRole().getName())
+                .isKyc(savedUser.getIsKyc())
+                .build();
+
+        return ApiResponse.<RegisterResponse>builder()
                 .success(true)
                 .message("Đăng ký tài khoản thành công. Vui lòng chờ duyệt eKYC.")
+                .data(response)
                 .build();
     }
 

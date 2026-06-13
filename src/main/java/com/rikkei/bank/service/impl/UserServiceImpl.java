@@ -89,12 +89,22 @@ public class UserServiceImpl implements UserService {
 
         return new UserResponseDto(user.getId(), user.getUsername(), user.getRole().getName(), user.getIsKyc());
     }
+
     @Override
     @Transactional
-    public void deleteUser(Long id) {
+    public UserResponseDto deleteUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("User not found"));
+                .orElseThrow(() -> new BusinessException("Không tìm thấy người dùng"));
+
         user.setIsActive(false);
-        userRepository.save(user);
+
+        user = userRepository.save(user);
+
+        return new UserResponseDto(
+                user.getId(),
+                user.getUsername(),
+                user.getRole().getName(),
+                user.getIsKyc()
+        );
     }
 }

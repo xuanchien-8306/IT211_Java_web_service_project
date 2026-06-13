@@ -60,11 +60,14 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return ResponseEntity.ok(ApiResponse.<Void>builder()
+    public ResponseEntity<ApiResponse<UserResponseDto>> deleteUser(@PathVariable Long id) {
+
+        UserResponseDto user = userService.deleteUser(id);
+
+        return ResponseEntity.ok(ApiResponse.<UserResponseDto>builder()
                 .success(true)
                 .message("Vô hiệu hóa người dùng thành công")
+                .data(user)
                 .build());
     }
 }
